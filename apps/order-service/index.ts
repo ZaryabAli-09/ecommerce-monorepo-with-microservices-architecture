@@ -3,6 +3,10 @@ import Fastify from "fastify";
 // instance of Fastify
 const fastify = Fastify();
 
+fastify.get("/", (request, reply) => {
+  return reply.send("Hello from order service");
+});
+
 // Running the server!
 try {
   await fastify.listen({ port: 8001 });
