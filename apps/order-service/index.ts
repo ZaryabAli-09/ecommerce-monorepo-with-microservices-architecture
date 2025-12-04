@@ -1,7 +1,7 @@
-// import 'dotenv/config'
-
+import dotenv from "dotenv";
 import Fastify from "fastify";
 import { clerkPlugin, getAuth } from "@clerk/fastify";
+import { shouldBeUser } from "./middleware/authMiddleware.js";
 // instance of Fastify
 const fastify = Fastify();
 
@@ -11,17 +11,12 @@ fastify.get("/", (request, reply) => {
   return reply.send("Hello from order service");
 });
 
-fastify.get("/test-auth", (request, reply) => {
-  try {
-    const { isAuthenticated, userId } = getAuth(request);
-
-    if (!isAuthenticated) return reply.status(401).send("Not authenticated");
-
-    return reply.send({ user: userId });
-  } catch (error) {
-    fastify.log.error(error);
-  }
-  return reply.send("Hello from order service");
+fastify.get("/test-auth", { preHandler: shouldBeUser }, (request, reply) => {
+  console.log("helllooo");
+  return reply.send({
+    message: "Order service authenticated",
+    userId: request.userId,
+  });
 });
 
 // Running the server!
