@@ -1,7 +1,8 @@
-import dotenv from "dotenv";
 import Fastify from "fastify";
 import { clerkPlugin, getAuth } from "@clerk/fastify";
 import { shouldBeUser } from "./middleware/authMiddleware.js";
+import { orderRoute } from "./routes/order.js";
+import { connectOrderDB } from "@repo/order-db";
 // instance of Fastify
 const fastify = Fastify();
 
@@ -19,10 +20,12 @@ fastify.get("/test-auth", { preHandler: shouldBeUser }, (request, reply) => {
   });
 });
 
+fastify.register(orderRoute);
 // Running the server!
 const start = async () => {
   try {
-    await fastify.listen({ port: 8001 });
+    (await connectOrderDB(), await fastify.listen({ port: 8001 }));
+    console.log("Order service listening on port 8001");
   } catch (error) {
     fastify.log.error(error);
     process.exit(1);

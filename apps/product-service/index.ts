@@ -1,45 +1,53 @@
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import { clerkMiddleware, getAuth } from "@clerk/express";
 import productRouter from "./routes/product.route";
 import categoriesRouter from "./routes/category.route";
+import { shouldBeUser } from "./middleware/authMiddleware";
 const app = express();
-app.use(express.json());
+
+const port = process.env.PORT || 8000;
 app.use(
   cors({
     origin: ["http://localhost:4000", "http://localhost:4001"],
   })
 );
-const port = process.env.PORT || 8000;
 
-app.get("/", (req: Request, res: Response) => {
-  console.log("working");
-  res.json("Hello from product service");
-});
-
+app.use(express.json());
 app.use(clerkMiddleware());
 
-app.get("/test-auth", (req: Request, res: Response) => {
-  const auth = getAuth(req);
-  const { userId, isAuthenticated } = auth;
-  console.log(isAuthenticated);
+app.get("/health", (req: Request, res: Response) => {
+  return res.status(200).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+  });
+});
 
-  if (!userId || !isAuthenticated) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  res.json({ message: "Product service authenticated", data: auth });
+app.get("/test", shouldBeUser, (req, res) => {
+  res.json({ message: "Product service authenticated", userId: req.userId });
 });
 
 app.use("/product", productRouter);
 app.use("/categories", categoriesRouter);
 
-app.use((err: any, req: Request, res: Response) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.log(err);
-  res
+  return res
     .status(err.status || 500)
-    .json({ message: err.message || "Internal server error" });
+    .json({ message: err.message || "Inter Server Error!" });
 });
 
-app.listen(port, () => {
-  console.log("Product service running on port", port);
-});
+const start = async () => {
+  try {
+    // Promise.all([await producer.connect(), await consumer.connect()]);
+    app.listen(8000, () => {
+      console.log("Product service is running on 8000");
+    });
+  } catch (error) {
+    console.log(error);
+    process.exit(1);
+  }
+};
+
+start();

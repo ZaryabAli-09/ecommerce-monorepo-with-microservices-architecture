@@ -3,37 +3,57 @@ import { Request, Response } from "express";
 
 export const createCategory = async (req: Request, res: Response) => {
   try {
-    const { name, slug } = req.body;
+    const data: Prisma.CategoryCreateInput = req.body;
+    const category = await prisma.category.create({ data });
+    return res.status(201).json(category);
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal Server Error" });
+  }
+};
 
-    console.log(name, slug);
-    // Validation
-    if (!name || !slug) {
-      return res.status(400).json({
-        message: "Missing required fields",
-        required: ["name", "slug"],
-      });
-    }
+export const updateCategory = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const data: Prisma.CategoryUpdateInput = req.body;
 
-    const data: Prisma.CategoryCreateInput = {
-      name,
-      slug,
-    };
-
-    const category = await prisma.category.create({
+    const category = await prisma.category.update({
+      where: { id: Number(id) },
       data,
     });
 
-    return res.status(201).json(category);
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      message: "Error creating category",
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+    return res.status(200).json(category);
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal Server Error" });
   }
 };
-export const updateCategory = async (req: Request, res: Response) => {};
 
-export const deleteCategory = async (req: Request, res: Response) => {};
+export const deleteCategory = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-export const getAllCategories = async (req: Request, res: Response) => {};
+    const category = await prisma.category.delete({
+      where: { id: Number(id) },
+    });
+
+    return res.status(200).json(category);
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal Server Error" });
+  }
+};
+
+export const getCategories = async (req: Request, res: Response) => {
+  try {
+    const categories = await prisma.category.findMany();
+    return res.status(200).json(categories);
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json({ message: error.message || "Internal Server Error" });
+  }
+};
